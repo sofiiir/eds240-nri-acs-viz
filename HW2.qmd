@@ -1,5 +1,53 @@
 ---
 title: "HW2"
 format: html
+author: Sofia Rodas
+Date: January 28, 2026
+warning: false
+message: false 
 ---
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? 
+
+```{r}
+# load necessary libraries
+library(tidyverse)
+library(janitor)
+library(tidycensus)
+```
+
+```{r}
+# read in data
+nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv"))
+
+# clean names
+nri <- clean_names(nri)
+```
+
+```{r}
+# number of states included
+length(unique(nri$state_name))
+```
+
+Only the 50 states will be included in this analysis. Filter to only the 50 states. 
+```{r}
+# only select for 50 states
+nri <- nri |> 
+  filter(nri$state_name %in% state.name)
+```
+
+```{r}
+# use code from class to get state geometry
+us_state_pop <- get_estimates(geography = "state", 
+                              product = "population",
+                              geometry = TRUE,
+                              state = NULL, 
+                              year = 2019) |> # request 2019 vintage for the 2010s (see documentation)
+  filter(variable == "POP") |> 
+  select(state = NAME, population = value) |> 
+  filter(state != "Puerto Rico")
+
+# save us pop data
+write_csv(us_state_pop, file = here::here("data", "us_state_pop.csv"))
+```
 
