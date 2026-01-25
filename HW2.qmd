@@ -14,6 +14,9 @@ How do FEMA National Risk Index scores for counties in California compare to tho
 library(tidyverse)
 library(janitor)
 library(tidycensus)
+library(sf)
+library(tmap)
+library(terra)
 ```
 
 ```{r}
@@ -49,5 +52,11 @@ us_state_pop <- get_estimates(geography = "state",
 
 # save us pop data
 write_csv(us_state_pop, file = here::here("data", "us_state_pop.csv"))
+```
+
+```{r}
+ tm_basemap() +
+  tm_shape(us_state_pop) +
+  tm_polygons()
 ```
 
