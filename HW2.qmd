@@ -55,7 +55,6 @@ write_csv(us_state_pop, file = here::here("data", "us_state_pop.csv"))
 ```
 
 ```{r}
- tm_basemap() +
   tm_shape(us_state_pop) +
   tm_polygons()
 ```
