@@ -154,7 +154,7 @@ min(hex_nri$nri_perc_mean)
 max(hex_nri$nri_perc_mean)
 ```
 
-
+Create bins to include the minimum and maximum NRI values. 
 ```{r}
 hex_nri$bin <- cut(hex_nri$nri_perc_mean,
   breaks = c(seq(from = 20, to = 100, length.out = 6)),
@@ -168,14 +168,20 @@ Plot the hexbins with national risk index state percentile composite.
 ```{r}
 ggplot(hex_nri) + 
   geom_sf(aes(geometry = geometry, fill = bin)) + 
-  geom_sf_text(aes(geometry = geometry, label = state_abbr), color = "black", size = 3, alpha = 0.6) +
-  # scale_fill_discrete() +
+  geom_sf_text(aes(geometry = geometry, label = state_abbr), 
+               color = "white", 
+               size = 3, 
+               alpha = 0.6) +
   theme_void() +
-  scale_fill_manual(values = c("#FDE4D8",
-                               "#F9AE8B",
-                               "#F5773D",
-                               "#C2440A",
-                               "#612205"))
+  scale_fill_manual(name = "National Risk Index \npercentile",
+    values = c("#FDE4D8",
+               "#F9AE8B",
+               "#F5773D",
+               "#C2440A",
+               "#612205")) +
+  # guides(fill = guide_colorbar(title.position = "top")) +
+  labs(title = "State National Risk Index percentiles") 
+#  theme(legend.position = c(0.5, 0.9))
   
 ```
 
