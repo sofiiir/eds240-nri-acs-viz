@@ -144,20 +144,20 @@ hexagons <- hexagons |>
 
 Join the two dataframes for plotting.
 ```{r}
-hex_nri <- full_join(hexagons, nri_avg_hex, by = join_by(state_abbr))
+hex_nri <- left_join(nri_avg_hex, hexagons, by = join_by(state_abbr))
 ```
 
 Hex-bin maps work on bins, so we'll set bins.
 ```{r}
-hex_nri$bin <-
+# hex_nri$bin <-
 ```
 
 
 Plot the hexbins with national risk index state percentile composite.
 ```{r}
 ggplot(hex_nri) + 
-  geom_sf(aes(fill = nri_perc_mean)) + 
-  geom_sf_text(aes(label = state_abbr), color = "white", size = 3, alpha = 0.6) +
+  geom_sf(aes(geometry = geometry, fill = nri_perc_mean)) + 
+  geom_sf_text(aes(geometry = geometry, label = state_abbr), color = "white", size = 3, alpha = 0.6) +
   scale_fill_gradient() +
   theme_void() +
   scale_fill_manual(values = )
