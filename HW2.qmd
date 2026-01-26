@@ -148,19 +148,34 @@ hex_nri <- left_join(nri_avg_hex, hexagons, by = join_by(state_abbr))
 ```
 
 Hex-bin maps work on bins, so we'll set bins.
+Look at the min and max of the NRI percentile composite score. 
 ```{r}
-# hex_nri$bin <-
+min(hex_nri$nri_perc_mean)
+max(hex_nri$nri_perc_mean)
+```
+
+
+```{r}
+hex_nri$bin <- cut(hex_nri$nri_perc_mean,
+  breaks = c(seq(from = 20, to = 100, length.out = 6)),
+  labels = c("Very low", "Relatively low", "Relatively moderate", "Relatively high", "Very high"),
+  include.lowest = TRUE
+)
 ```
 
 
 Plot the hexbins with national risk index state percentile composite.
 ```{r}
 ggplot(hex_nri) + 
-  geom_sf(aes(geometry = geometry, fill = nri_perc_mean)) + 
-  geom_sf_text(aes(geometry = geometry, label = state_abbr), color = "white", size = 3, alpha = 0.6) +
-  scale_fill_gradient() +
+  geom_sf(aes(geometry = geometry, fill = bin)) + 
+  geom_sf_text(aes(geometry = geometry, label = state_abbr), color = "black", size = 3, alpha = 0.6) +
+  # scale_fill_discrete() +
   theme_void() +
-  scale_fill_manual(values = )
+  scale_fill_manual(values = c("#FDE4D8",
+                               "#F9AE8B",
+                               "#F5773D",
+                               "#C2440A",
+                               "#612205"))
   
 ```
 
