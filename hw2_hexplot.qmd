@@ -1,0 +1,86 @@
+---
+title: "hw2_hexplot"
+format: html
+author: Sofia Rodas
+Date: January 28, 2026
+warning: false
+message: false 
+---
+
+This quarto document explores FEMA National Risk Index scores throughout California in comparison to the NRI scores in other states. 
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? 
+
+```{r}
+# load necessary libraries
+library(tidyverse)
+library(janitor)
+```
+
+```{r}
+# read in data
+nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv"))
+
+# clean names
+nri <- clean_names(nri)
+```
+
+Check the number of states. This analysis will only include the 50 US states. 
+```{r}
+# number of states included
+length(unique(nri$state_name))
+```
+
+Filter to only the 50 states. 
+```{r}
+# only select for 50 states
+nri <- nri |> 
+  filter(nri$state_name %in% state.name)
+```
+
+Let's explore another map. The Hexbin map will have a better layout and will ensure the information on the East Coast is visible in comparison to the bubble map. The hexagons were downloaded from https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map. 
+```{r}
+hexagons <- read_sf("data/us_states_hexgrid.geojson")
+```
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to average out all of the NRI scores for each state. 
+```{r}
+nri_high_risk <- nri |> 
+  group_by(state_name_abbreviation) |> 
+  mutate(high_risk_count = sum(national_risk_index_rating_composite == "Relatively High")) |> 
+  rename(state_abbr = state_name_abbreviation)
+```
+
+The column names need to be cleaned.
+```{r}
+hexagons <- hexagons |> 
+  rename(state_abbr = iso3166_2) |> 
+   mutate(google_name = gsub(" \\(United States\\)", "", google_name))
+  
+```
+
+Join the two dataframes for plotting.
+```{r}
+hex_nri <- left_join(nri_avg_hex, hexagons, by = join_by(state_abbr))
+```
+
+Plot the hexbins with national risk index state percentile composite.
+```{r}
+ggplot(hex_nri) + 
+  geom_sf(aes(geometry = geometry, fill = bin)) + 
+  geom_sf_text(aes(geometry = geometry, label = state_abbr), 
+               color = "white", 
+               size = 3, 
+               alpha = 0.6) +
+  theme_void() +
+  scale_fill_manual(name = "National Risk Index \npercentile",
+    values = c("#FDE4D8",
+               "#F9AE8B",
+               "#F5773D",
+               "#C2440A",
+               "#612205")) +
+  # guides(fill = guide_colorbar(title.position = "top")) +
+  labs(title = "State National Risk Index percentiles") 
+#  theme(legend.position = c(0.5, 0.9))
+  
+```
