@@ -1,0 +1,187 @@
+---
+title: "HW2"
+format: html
+author: Sofia Rodas
+Date: January 28, 2026
+warning: false
+message: false 
+---
+
+This quarto document explores FEMA National Risk Index scores throughout California in comparison to the NRI scores in other states. 
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? 
+
+```{r}
+# load necessary libraries
+library(tidyverse)
+library(janitor)
+library(tidycensus)
+library(sf)
+library(tmap)
+library(terra)
+```
+
+```{r}
+# read in data
+nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv"))
+
+# clean names
+nri <- clean_names(nri)
+```
+Check the number of states. This analysis will only include the 50 US states. 
+```{r}
+# number of states included
+length(unique(nri$state_name))
+```
+
+Filter to only the 50 states. 
+```{r}
+# only select for 50 states
+nri <- nri |> 
+  filter(nri$state_name %in% state.name)
+```
+
+The NRI data does not include geometry. The visual would be most useful if it includes all geospatial data. Let's use the census data to get some geometry. 
+```{r}
+# use code from class to get state geometry
+us_state_pop <- get_estimates(geography = "state", 
+                              product = "population",
+                              geometry = TRUE,
+                              state = NULL, 
+                              year = 2019) |> # request 2019 vintage for the 2010s (see documentation)
+  filter(variable == "POP") |> 
+  select(state = NAME, population = value) |> 
+  filter(state != "Puerto Rico")
+
+# save us pop data
+write_csv(us_state_pop, file = here::here("data", "us_state_pop.csv"))
+```
+The CRS of the census data is not ideal for the visualization of the 50 states. Let's transform it to something more appropriate.
+```{r}
+us_state_pop <- st_transform(us_state_pop, crs = st_crs('EPSG:3083'))
+```
+
+Initial visualization of the US state's geometry.
+```{r}
+  tm_shape(us_state_pop) +
+  tm_polygons()
+```
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to average out all of the NRI scores for each state. 
+```{r}
+nri_averages <- nri |> 
+  group_by(state_name) |> 
+  summarize(nri_perc_mean = mean(national_risk_index_state_percentile_composite),
+            exp_an_loss_perc_mean = mean(expected_annual_loss_state_percentile_composite),
+            soc_vul_perc_mean = mean(social_vulnerability_and_community_resilience_adjusted_expected_annual_loss_rate_national_percentile_composite)) |> 
+  rename(state = state_name)
+```
+Join the data frames to combine the geometry with the aggregate state NRI data.
+```{r}
+geom_nri_avg <- full_join(nri_averages, us_state_pop, by = join_by(state))
+```
+
+To map the bubbles on the map we need to extract lat and long from the `geometry` column.
+```{r}
+# geom_nri_avg <- geom_nri_avg |> 
+#   extract(geometry, into = c('Lat', 'Lon'), '\\((.*),(.*)\\)', conv = T)
+
+# geom_nri_avg_ll <- geom_nri_avg |>
+#   mutate(geometry = gsub('[()°]', '', geometry)) |>
+#   separate(col = geometry, into = c('lat', 'lon'), sep = '\\,')
+
+coords <- st_coordinates(st_centroid(geom_nri_avg$geometry))
+geom_nri_avg$lon <- coords[,1]
+geom_nri_avg$lat <- coords[,2]
+
+# # mapping as an sf object requires a singular geometry column
+# geom_join <- geom_nri_avg |> 
+#   select(c("state", "geometry"))
+
+# join the two df to have a single df with lat, long, and geom
+# geom_nri_avg_map <- full_join(geom_join, geom_nri_avg_ll, by = join_by(state))
+
+```
+
+Let's make a bubble map first to explore differences in the data.
+```{r}
+  ggplot() +
+  geom_sf(data = geom_nri_avg, aes(geometry = geometry)) +
+   geom_point(data = geom_nri_avg, 
+              aes(x = lon, 
+                  y = lat, 
+                  size = nri_perc_mean, 
+                  color = nri_perc_mean),
+              alpha = 0.6) +
+  scale_color_viridis_c() +
+  theme_minimal()
+  
+```
+The bubble map looks awful.
+
+Let's explore another map. The Hexbin map will have a better layout and will ensure the information on the East Coast is visible in comparison to the bubble map. The hexagons were downloaded from https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map. 
+```{r}
+hexagons <- read_sf("data/us_states_hexgrid.geojson")
+```
+
+How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to average out all of the NRI scores for each state. 
+```{r}
+nri_avg_hex <- nri |> 
+  group_by(state_name_abbreviation) |> 
+  summarize(nri_perc_mean = mean(national_risk_index_state_percentile_composite, na.rm = TRUE),
+            exp_an_loss_perc_mean = mean(expected_annual_loss_state_percentile_composite, na.rm = TRUE),
+            soc_vul_perc_mean = mean(social_vulnerability_and_community_resilience_adjusted_expected_annual_loss_rate_national_percentile_composite, na.rm = TRUE)) |> 
+  rename(state_abbr = state_name_abbreviation)
+```
+
+The column names need to be cleaned.
+```{r}
+hexagons <- hexagons |> 
+  rename(state_abbr = iso3166_2) |> 
+   mutate(google_name = gsub(" \\(United States\\)", "", google_name))
+  
+```
+
+Join the two dataframes for plotting.
+```{r}
+hex_nri <- left_join(nri_avg_hex, hexagons, by = join_by(state_abbr))
+```
+
+Hex-bin maps work on bins, so we'll set bins.
+Look at the min and max of the NRI percentile composite score. 
+```{r}
+min(hex_nri$nri_perc_mean)
+max(hex_nri$nri_perc_mean)
+```
+
+Create bins to include the minimum and maximum NRI values. 
+```{r}
+hex_nri$bin <- cut(hex_nri$nri_perc_mean,
+  breaks = c(seq(from = 20, to = 100, length.out = 6)),
+  labels = c("Very low", "Relatively low", "Relatively moderate", "Relatively high", "Very high"),
+  include.lowest = TRUE
+)
+```
+
+
+Plot the hexbins with national risk index state percentile composite.
+```{r}
+ggplot(hex_nri) + 
+  geom_sf(aes(geometry = geometry, fill = bin)) + 
+  geom_sf_text(aes(geometry = geometry, label = state_abbr), 
+               color = "white", 
+               size = 3, 
+               alpha = 0.6) +
+  theme_void() +
+  scale_fill_manual(name = "National Risk Index \npercentile",
+    values = c("#FDE4D8",
+               "#F9AE8B",
+               "#F5773D",
+               "#C2440A",
+               "#612205")) +
+#  guides(fill = guide_colorbar(title.position = "top")) +
+  labs(title = "State National Risk Index percentiles") 
+  theme(legend.position = c(0.5, 0.9))
+  
+```
+
