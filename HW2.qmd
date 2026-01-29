@@ -1,6 +1,6 @@
 ---
 title: "EDS 240 - Homework 2"
-format: html
+format: pdf
 author: Sofia Rodas
 Date: January 28, 2026
 warning: false
