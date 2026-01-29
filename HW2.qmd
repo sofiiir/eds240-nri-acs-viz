@@ -1,5 +1,5 @@
 ---
-title: "HW2"
+title: "EDS 240 - Homework 2"
 format: html
 author: Sofia Rodas
 Date: January 28, 2026
@@ -9,16 +9,13 @@ message: false
 
 This quarto document explores FEMA National Risk Index scores throughout California in comparison to the NRI scores in other states. 
 
-How do FEMA National Risk Index scores for counties in California compare to those in other states? 
+**How do FEMA National Risk Index scores for counties in California compare to those in other states?** 
 
 ```{r}
 # load necessary libraries
 library(tidyverse)
 library(janitor)
-library(tidycensus)
 library(sf)
-library(tmap)
-library(terra)
 ```
 
 ```{r}
@@ -28,6 +25,7 @@ nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv"))
 # clean names
 nri <- clean_names(nri)
 ```
+
 Check the number of states. This analysis will only include the 50 US states. 
 ```{r}
 # number of states included
@@ -41,101 +39,26 @@ nri <- nri |>
   filter(nri$state_name %in% state.name)
 ```
 
-The NRI data does not include geometry. The visual would be most useful if it includes all geospatial data. Let's use the census data to get some geometry. 
+The Hexbin map will ensure the information on the East Coast is visible in comparison to a bubble map. The hexagons were downloaded from https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map. 
 ```{r}
-# use code from class to get state geometry
-us_state_pop <- get_estimates(geography = "state", 
-                              product = "population",
-                              geometry = TRUE,
-                              state = NULL, 
-                              year = 2019) |> # request 2019 vintage for the 2010s (see documentation)
-  filter(variable == "POP") |> 
-  select(state = NAME, population = value) |> 
-  filter(state != "Puerto Rico")
-
-# save us pop data
-write_csv(us_state_pop, file = here::here("data", "us_state_pop.csv"))
-```
-The CRS of the census data is not ideal for the visualization of the 50 states. Let's transform it to something more appropriate.
-```{r}
-us_state_pop <- st_transform(us_state_pop, crs = st_crs('EPSG:3083'))
-```
-
-Initial visualization of the US state's geometry.
-```{r}
-  tm_shape(us_state_pop) +
-  tm_polygons()
-```
-
-How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to average out all of the NRI scores for each state. 
-```{r}
-nri_averages <- nri |> 
-  group_by(state_name) |> 
-  summarize(nri_perc_mean = mean(national_risk_index_state_percentile_composite),
-            exp_an_loss_perc_mean = mean(expected_annual_loss_state_percentile_composite),
-            soc_vul_perc_mean = mean(social_vulnerability_and_community_resilience_adjusted_expected_annual_loss_rate_national_percentile_composite)) |> 
-  rename(state = state_name)
-```
-Join the data frames to combine the geometry with the aggregate state NRI data.
-```{r}
-geom_nri_avg <- full_join(nri_averages, us_state_pop, by = join_by(state))
-```
-
-To map the bubbles on the map we need to extract lat and long from the `geometry` column.
-```{r}
-# geom_nri_avg <- geom_nri_avg |> 
-#   extract(geometry, into = c('Lat', 'Lon'), '\\((.*),(.*)\\)', conv = T)
-
-# geom_nri_avg_ll <- geom_nri_avg |>
-#   mutate(geometry = gsub('[()°]', '', geometry)) |>
-#   separate(col = geometry, into = c('lat', 'lon'), sep = '\\,')
-
-coords <- st_coordinates(st_centroid(geom_nri_avg$geometry))
-geom_nri_avg$lon <- coords[,1]
-geom_nri_avg$lat <- coords[,2]
-
-# # mapping as an sf object requires a singular geometry column
-# geom_join <- geom_nri_avg |> 
-#   select(c("state", "geometry"))
-
-# join the two df to have a single df with lat, long, and geom
-# geom_nri_avg_map <- full_join(geom_join, geom_nri_avg_ll, by = join_by(state))
-
-```
-
-Let's make a bubble map first to explore differences in the data.
-```{r}
-  ggplot() +
-  geom_sf(data = geom_nri_avg, aes(geometry = geometry)) +
-   geom_point(data = geom_nri_avg, 
-              aes(x = lon, 
-                  y = lat, 
-                  size = nri_perc_mean, 
-                  color = nri_perc_mean),
-              alpha = 0.6) +
-  scale_color_viridis_c() +
-  theme_minimal()
-  
-```
-The bubble map looks awful.
-
-Let's explore another map. The Hexbin map will have a better layout and will ensure the information on the East Coast is visible in comparison to the bubble map. The hexagons were downloaded from https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map. 
-```{r}
+# read in hexbins file
 hexagons <- read_sf("data/us_states_hexgrid.geojson")
 ```
 
-How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to average out all of the NRI scores for each state. 
+How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to calculate the number of counties in each state that have an NRI score in the "Relatively High" category.
 ```{r}
-nri_avg_hex <- nri |> 
-  group_by(state_name_abbreviation) |> 
-  summarize(nri_perc_mean = mean(national_risk_index_state_percentile_composite, na.rm = TRUE),
-            exp_an_loss_perc_mean = mean(expected_annual_loss_state_percentile_composite, na.rm = TRUE),
-            soc_vul_perc_mean = mean(social_vulnerability_and_community_resilience_adjusted_expected_annual_loss_rate_national_percentile_composite, na.rm = TRUE)) |> 
-  rename(state_abbr = state_name_abbreviation)
+# calculate sum of counties satisfying the boolean 
+nri_high_risk <- nri |> 
+  group_by(state_name_abbreviation) |>  
+  summarize(high_risk_count = sum(national_risk_index_rating_composite == "Relatively High", 
+                                  na.rm = TRUE)) |> 
+  rename(state_abbr = state_name_abbreviation) |> 
+  ungroup()
 ```
 
-The column names need to be cleaned.
+The hexagon column names need to be cleaned in order to join the hexagon and NRI scores.
 ```{r}
+# rename and clean columns
 hexagons <- hexagons |> 
   rename(state_abbr = iso3166_2) |> 
    mutate(google_name = gsub(" \\(United States\\)", "", google_name))
@@ -144,44 +67,74 @@ hexagons <- hexagons |>
 
 Join the two dataframes for plotting.
 ```{r}
-hex_nri <- left_join(nri_avg_hex, hexagons, by = join_by(state_abbr))
+hex_nri <- left_join(nri_high_risk, hexagons, by = join_by(state_abbr))
 ```
 
-Hex-bin maps work on bins, so we'll set bins.
-Look at the min and max of the NRI percentile composite score. 
+Calculate the minimum and maximum in the values of states with the most "Relatively High" counties.
 ```{r}
-min(hex_nri$nri_perc_mean)
-max(hex_nri$nri_perc_mean)
+min(hex_nri$high_risk_count)
+max(hex_nri$high_risk_count)
 ```
 
-Create bins to include the minimum and maximum NRI values. 
+
+Create bins to include the minimum and maximum NRI values. This was also done with trial and error. 
 ```{r}
-hex_nri$bin <- cut(hex_nri$nri_perc_mean,
-  breaks = c(seq(from = 20, to = 100, length.out = 6)),
-  labels = c("Very low", "Relatively low", "Relatively moderate", "Relatively high", "Very high"),
+hex_nri$bin <- cut(hex_nri$high_risk_count, # select the column to bin based on
+  breaks = c(-0.1, 0, 2, 5, 15, 22), # create bins
+  labels = c("Zero counties", 
+             "1-2 Counties", 
+             "2-5 Counties", 
+             "5-15 Counties", 
+             "15-22 Counties"), # name bins appropriately for graphing 
   include.lowest = TRUE
 )
 ```
 
 
-Plot the hexbins with national risk index state percentile composite.
+Plot the hexbins with the number of counties in each state with an NRI score in the "Relatively High" category.
 ```{r}
+#| fig-cap: Data - FEMA National Risk Index (2025 Release)
+#| fig-alt: A map of the United States where each state is represented by a hexagon. The shading of each hexagon indicates the number of counties in a state that has and NRI score in the category "Relatively High." California and Florida have the highest number of counties (between 15 and 22 counties) with NRI scores in the "Relatively High category. 
+#| fig-asp: 0.8
+ 
 ggplot(hex_nri) + 
   geom_sf(aes(geometry = geometry, fill = bin)) + 
-  geom_sf_text(aes(geometry = geometry, label = state_abbr), 
-               color = "white", 
+  geom_sf_text(aes(geometry = geometry, 
+                   label = state_abbr), # add state abbreviations to the hexagons
+               color = "black", 
                size = 3, 
                alpha = 0.6) +
-  theme_void() +
-  scale_fill_manual(name = "National Risk Index \npercentile",
-    values = c("#FDE4D8",
-               "#F9AE8B",
+  theme_void() +  # removes grid lines and unnecessary graph ink
+  scale_fill_manual(name = "", # remove the legend title
+    values = c("#FEF1EC",
+               "#FABB9E",
                "#F5773D",
                "#C2440A",
                "#612205")) +
-#  guides(fill = guide_colorbar(title.position = "top")) +
-  labs(title = "State National Risk Index percentiles") 
-  theme(legend.position = c(0.5, 0.9))
+  labs(title = "Number of Counties with Relatively High National Risk Index Scores") +
+  theme(plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom")
   
 ```
 
+1. What are your variables of interest and what kinds of data (e.g. numeric, categorical, ordered, etc.) are they (a bullet point list is fine)?
+
+- Variable of interest: Number of counties that have "Relatively High" NRI scores per state.
+
+2. How did you decide which type of graphic form was best suited for answering the question? What alternative graphic forms could you have used instead? Why did you settle on this particular graphic form?
+
+- Since this data is highly geographic some form of spatial data felt best to visualize the states with the highest count of counties with NRI scores in the "Relatively High" category. Originally, I made a bubble map but the east coast has too many and too close of states to make it effective. This hexbins map assigns one value to each hexagon and maintains the size regardless of the true state's size acting as a proxy for actually mapping the data.
+- I could have also made a bar plot for the states with the ten highest number of counties with NRI scores in the "Relatively High" category. I again chose hexbins because I wanted to include a geospatial aspect. I also like that the hexbin provides a way to represent the data of all 50 states without being too overwhelming. 
+
+3. Summarize your main finding in no more than two sentences.
+- California and Florida are the two states that have the most number of counties with NRI scores in the "Relatively High" risk categories.
+
+4. What modifications did you make to this visualization to make it more easily readable?
+- I moved the legend to the bottom of the graph so that the map can span the length of the plot. This reduces the amount of eye movement necessary to understand the plot. 
+- I customized the colors to make them monochromatic displaying the values from low to high. Since I'm only plotting one variable different shades of the same color were appropriate to represent different values. 
+- I changed the labels in the legend and removed the legend title since it was redundant with the title of the graph.
+- I added labels to the hexagons so that it is easy to interpret and understand.
+
+5. Is there anything you wanted to implement, but didn’t know how? If so, please describe. 
+- I wanted to change the color of the labels for California and Florida to white so that it could be easier to see. I had trouble implementing the change for just some of the labels of the hexagons.
+- I also wanted to move the labels to the top of the graph but the spacing was crammed and I was unsure how to adjust the overall spacing. 
