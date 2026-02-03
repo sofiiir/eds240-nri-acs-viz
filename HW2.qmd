@@ -125,8 +125,8 @@ ggplot() +
                "#F5773D",
                "#C2440A",
                "#612205")) +
-  labs(title = "Number of Counties with Relatively High National Risk Index Scores",
-       subtitle = "subtitle") +
+  labs(title = "Number of Counties with Relatively High National Risk Index (NRI) Scores",
+       subtitle = "States with the highest NRI scores are CA and FL") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
     legend.position = "bottom")
