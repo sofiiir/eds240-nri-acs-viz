@@ -1,6 +1,6 @@
 ---
 title: "EDS 240 - Homework 2"
-format: pdf
+format: html
 author: Sofia Rodas
 Date: January 28, 2026
 warning: false
@@ -39,13 +39,13 @@ nri <- nri |>
   filter(nri$state_name %in% state.name)
 ```
 
-The Hexbin map will ensure the information on the East Coast is visible in comparison to a bubble map. The hexagons were downloaded from https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map. 
+The Hexbin map will ensure the information on the East Coast is visible in comparison to a bubble map. The hexagons were downloaded from [https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map](https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map). 
 ```{r}
 # read in hexbins file
 hexagons <- read_sf("data/us_states_hexgrid.geojson")
 ```
 
-How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to calculate the number of counties in each state that have an NRI score in the "Relatively High" category.
+How do FEMA National Risk Index scores for counties in California compare to those in other states? My interpretation of this question is to calculate the percentage of counties in each state that have an NRI score in the "Relatively High" category.
 ```{r}
 # calculate sum of counties satisfying the boolean 
 nri_high_risk <- nri |> 
@@ -54,6 +54,22 @@ nri_high_risk <- nri |>
                                   na.rm = TRUE)) |> 
   rename(state_abbr = state_name_abbreviation) |> 
   ungroup()
+```
+
+```{r}
+# calculate the number of counties in each state
+nri_total <- nri |> 
+  group_by(state_name_abbreviation) |> 
+  summarize(county_num = n()) |> 
+  rename(state_abbr = state_name_abbreviation) |>
+  ungroup()
+
+# join the two data frames
+nri_high_risk_percent <- full_join(nri_high_risk, nri_total, by = "state_abbr")
+
+# calculate percentage with relatively high scores
+nri_high_risk_percent <- nri_high_risk_percent |> 
+  mutate(perc_high_risk_count = (high_risk_count/county_num) * 100)
 ```
 
 The hexagon column names need to be cleaned in order to join the hexagon and NRI scores.
@@ -67,39 +83,43 @@ hexagons <- hexagons |>
 
 Join the two dataframes for plotting.
 ```{r}
-hex_nri <- left_join(nri_high_risk, hexagons, by = join_by(state_abbr))
+hex_nri <- left_join(nri_high_risk_percent, hexagons, by = join_by(state_abbr))
 ```
 
-Calculate the minimum and maximum in the values of states with the most "Relatively High" counties.
+Calculate the minimum and maximum percentage of counties with "Relatively High" NRI scores in all states.
 ```{r}
-min(hex_nri$high_risk_count)
-max(hex_nri$high_risk_count)
+min(hex_nri$perc_high_risk_count)
+max(hex_nri$perc_high_risk_count)
 ```
 
 
-Create bins to include the minimum and maximum NRI values. This was also done with trial and error. 
+Create bins to include the minimum and maximum percentage of counties with "Relatively High" NRI scores. This was also done with trial and error. 
 ```{r}
-hex_nri$bin <- cut(hex_nri$high_risk_count, # select the column to bin based on
-  breaks = c(-0.1, 0, 2, 5, 15, 22), # create bins
-  labels = c("Zero counties", 
-             "1-2 Counties", 
-             "2-5 Counties", 
-             "5-15 Counties", 
-             "15-22 Counties"), # name bins appropriately for graphing 
+hex_nri$bin <- cut(hex_nri$perc_high_risk_count, # select the column to bin based on
+  breaks = c(-0.1, 0, 5, 20, 30, 45), # create bins
+  labels = c("Zero percent", 
+             "1-5 percent", 
+             "5-20 percent", 
+             "20-30 percent",
+             "30-45 percent"), # name bins appropriately for graphing 
   include.lowest = TRUE
 )
 ```
-##### Subset for only CA and FL to make their label standout
+##### Subset for only states with 30 to 45 percent of counties with "Relatively High" NRI scores.
 ```{r}
 hex_nri_cc <- hex_nri |> 
-  filter(state_abbr == "FL" | state_abbr == "CA")
+  filter(state_abbr == "CA"| 
+           state_abbr == "CT" | 
+           state_abbr == "NJ" | 
+           state_abbr == "DE" |
+           state_abbr == "HI")
 ```
 
 
-Plot the hexbins with the number of counties in each state with an NRI score in the "Relatively High" category.
+Plot the hexbins with the percentage of counties in each state with an NRI score in the "Relatively High" category.
 ```{r}
-#| fig-cap: Data - FEMA National Risk Index (2025 Release)
-#| fig-alt: A map of the United States where each state is represented by a hexagon. The shading of each hexagon indicates the number of counties in a state that has and NRI score in the category "Relatively High." California and Florida have the highest number of counties (between 15 and 22 counties) with NRI scores in the "Relatively High category. 
+#| fig-cap: Data - FEMA National Risk Index (NRI) (2025 Release)
+#| fig-alt: A map of the United States where each state is represented by a hexagon. The shading of each hexagon indicates the npercentage of counties in each state with an NRI score in the "Relatively High" category. California, Connecticut, Delaware, Hawaii, and New Jersey have the highest percentage of counties with between 30 to 45 percent of counties having "Relatively High" NRI scores.
 #| fig-asp: 1
  
 ggplot() + 
@@ -115,8 +135,8 @@ ggplot() +
   geom_sf_text(data = hex_nri_cc,
                aes(geometry = geometry,
                    label = state_abbr),
-                color = "white", # add white labels for contrast to CA and FL
-               size = 3, 
+                color = "white", # add white labels for states within the 30-45% range
+               size = 3,
                alpha = 0.6) +
   theme_void() +  # removes grid lines and unnecessary graph ink
   scale_fill_manual(name = "", # remove the legend title
@@ -125,8 +145,8 @@ ggplot() +
                "#F5773D",
                "#C2440A",
                "#612205")) +
-  labs(title = "Number of Counties with Relatively High National Risk Index (NRI) Scores",
-       subtitle = "States with the highest NRI scores are CA and FL") +
+  labs(title = " Percentage of Counties per State with Relatively High NRI Scores",
+       subtitle = "States with the highest percentage of counties \nwith Relatively High NRI scores are CA, CT, DE, HI, and NJ.") +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
     legend.position = "bottom")
@@ -135,7 +155,7 @@ ggplot() +
 
 1. What are your variables of interest and what kinds of data (e.g. numeric, categorical, ordered, etc.) are they (a bullet point list is fine)?
 
-- Variable of interest: Number of counties that have "Relatively High" NRI scores per state.
+- Variable of interest: Percentage of counties per state that have "Relatively High" NRI scores.
 
 2. How did you decide which type of graphic form was best suited for answering the question? What alternative graphic forms could you have used instead? Why did you settle on this particular graphic form?
 
@@ -143,7 +163,7 @@ ggplot() +
 - I could have also made a bar plot for the states with the ten highest number of counties with NRI scores in the "Relatively High" category. I again chose hexbins because I wanted to include a geospatial aspect. I also like that the hexbin provides a way to represent the data of all 50 states without being too overwhelming. 
 
 3. Summarize your main finding in no more than two sentences.
-- California and Florida are the two states that have the most number of counties with NRI scores in the "Relatively High" risk categories.
+- California, Connecticut, Delaware, Hawaii, and New Jersey have the highest percentage of counties with "Relatively High" NRI scores.
 
 4. What modifications did you make to this visualization to make it more easily readable?
 - I moved the legend to the bottom of the graph so that the map can span the length of the plot. This reduces the amount of eye movement necessary to understand the plot. 
@@ -152,5 +172,4 @@ ggplot() +
 - I added labels to the hexagons so that it is easy to interpret and understand.
 
 5. Is there anything you wanted to implement, but didn’t know how? If so, please describe. 
-- I wanted to change the color of the labels for California and Florida to white so that it could be easier to see. I had trouble implementing the change for just some of the labels of the hexagons.
-- I also wanted to move the labels to the top of the graph but the spacing was crammed and I was unsure how to adjust the overall spacing. 
+- I wanted to move the labels to the top of the graph but the spacing was crammed and I was unsure how to adjust the overall spacing. 
