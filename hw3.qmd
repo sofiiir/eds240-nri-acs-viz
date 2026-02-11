@@ -1,0 +1,114 @@
+---
+title: "HW3: How does climate hazard risk exposure vary across racial / ethnic groups in California?"
+format: html
+author: Sofia Rodas
+Date: February 12, 2026
+warning: false
+message: false
+---
+
+# How does climate hazard risk exposure vary across racial/ethnic groups in California? 
+
+This quarto document explores how FEMA National Risk Index (NRI) scores throughout California vary between racial and ethnic groups. Ethnicity data is downloaded directly from the American Community Survey (ACS) Census data. 
+```{r}
+#|warning: false
+#|message: false
+
+# load in necessary libraries
+library(tidyverse)
+library(tidycensus)
+library(janitor)
+```
+## Load data 
+The code commented out below allows us to directly download ACS census data into R. It is commented out as it was saved as a csv and is now accessed locally.
+```{r}
+# #....Step 1a: see all available ACS variables + descriptions.....
+# acs_vars <- tidycensus::load_variables(year = 2023,
+#                                        dataset = "acs1")
+# 
+# #..............Step 1b: import race & ethnicity data.............
+# race_ethnicity <- tidycensus::get_acs(
+#   geography = "county",
+#   survey = "acs1",
+#   # NOTE: you may not end up using all these variables
+#   variables = c("B01003_001", "B02001_002", "B02001_003", 
+#                 "B02001_004", "B02001_005", "B02001_006",
+#                 "B02001_007", "B02001_008", "B03002_012",
+#                 "B03002_002"),
+#   state = "CA", 
+#   year = 2023) |>
+#   # join variable descriptions (so we know what's what!)
+#   dplyr::left_join(acs_vars, by = dplyr::join_by(variable == name)) 
+# 
+# #.................Step 2: write ACS data to file.................
+# readr::write_csv(race_ethnicity, here::here("data", "ACS-1yr-2023-county-race-ethnicity.csv"))
+
+#..................Step 3: read in your CSV file.................
+race_ethnicity <- readr::read_csv(here::here("data", "ACS-1yr-2023-county-race-ethnicity.csv"))
+```
+```{r}
+# load in the NRI data
+nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv")) |> 
+  clean_names()
+```
+
+## Clean data
+The ACS data is not "tidy-data". Lets make some changes to tidy the data. 
+```{r}
+race_ethnicity <- race_ethnicity |>  
+  pivot_wider(names_from = label, values_from = c(estimate)) |> 
+  select(!c(moe, variable, concept)) |>  # drop unnecessary columns
+  clean_names() 
+```
+
+The data frame is still not tidy because each county name has a row for each column. Let's make one row for each county instead. 
+```{r}
+race_ethnicity <- race_ethnicity |> 
+  group_by(name) |> 
+  summarise(across(starts_with("estimate_total"), ~sum(., na.rm = T))) |> 
+  ungroup()
+```
+
+The ethnicity data needs to be combined with the NRI data so let's make the column only the name of the county.
+```{r}
+race_ethnicity <- race_ethnicity |> 
+  mutate(county_name = str_remove_all(name, " County, California")) |> 
+  select(!c(name)) |> 
+  relocate(county_name, .before = estimate_total)
+```
+
+Filter the NRI data to only CA data.
+```{r}
+nri <- nri |> 
+  filter(state_name == "California")
+```
+
+
+Join the NRI data and ethnicity data for the rest of the analysis.
+```{r}
+ethnicity_nri <- full_join(race_ethnicity, nri, by = join_by(county_name))
+```
+
+
+First, I'll explore what the percent of total white alone is for the counties in California.
+```{r}
+ethnicity_nri <- ethnicity_nri |> 
+  mutate(white_percentage = estimate_total_white_alone/estimate_total)
+```
+
+What are the ranges for percentage of white population per county?
+```{r}
+max(ethnicity_nri$white_percentage, na.rm = TRUE)
+min(ethnicity_nri$white_percentage, na.rm = TRUE)
+```
+
+```{r}
+ggplot(ethnicity_nri) +
+  geom_point(aes(x = community_risk_factor_value, 
+                 y = white_percentage, 
+                 col = national_risk_index_rating_composite)) +
+  scale_color_viridis_d() +
+  theme_minimal()
+```
+
+
