@@ -333,7 +333,9 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
 ```
 
 ```{r}
-(very_high + relatively_high) / (relatively_moderate + theme(plot.margin = unit(c(0,100,0,100), "pt"))) +
+
+
+very_high +  relatively_high  + relatively_moderate + relatively_low +
   plot_annotation(title = "NRI and Ethnicity Scores for Counties in California",
                   theme = theme(plot.title = element_text(size = 24, face = "bold"))) + 
   plot_layout(guides = "collect",
