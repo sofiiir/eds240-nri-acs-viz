@@ -2,9 +2,9 @@
 #### Author : Sofia Rodas
 
 This repository answers:
-**How do FEMA National Risk Index scores for counties in California compare to those in other states?** 
+**How do FEMA National Risk Index scores for counties in California compare to those in other states?**   
 **AND**
-
+**How does climate hazard risk exposure vary across racial / ethnic groups in California?** 
 
 
 To answer this question, this repository calculates the number of counties in each state that have an NRI score in the "Relatively High" category and plots them. 
