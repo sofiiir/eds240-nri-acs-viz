@@ -57,8 +57,9 @@ The ACS data is not "tidy-data". Lets make some changes to tidy the data.
 ```{r}
 race_ethnicity <- race_ethnicity |>  
   pivot_wider(names_from = label, values_from = c(estimate)) |> 
-  select(!c(moe, variable, concept)) |>  # drop unnecessary columns
-  clean_names() 
+  clean_names() |> 
+  select(!c(moe, variable, concept, estimate_total_not_hispanic_or_latino)) # drop unnecessary columns
+  
 ```
 
 The data frame is still not tidy because each county name has a row for each column. Let's make one row for each county instead. 
@@ -111,4 +112,25 @@ ggplot(ethnicity_nri) +
   theme_minimal()
 ```
 
+
+```{r} 
+# ethnicity_nri_perc <- ethnicity_nri |> 
+#   mutate()
+
+heatmap <- ethnicity_nri |>
+  select(county_name, estimate_total, estimate_total_white_alone, estimate_total_white_alone,estimate_total_black_or_african_american_alone, estimate_total_american_indian_and_alaska_native_alone, estimate_total_asian_alone, estimate_total_native_hawaiian_and_other_pacific_islander_alone, estimate_total_some_other_race_alone, estimate_total_two_or_more_races, estimate_total_hispanic_or_latino) |> 
+  pivot_longer(cols = -county_name,
+               names_to = "variable",
+               values_to = "values") |> 
+  drop_na()
+
+ggplot(heatmap, aes(x = county_name, y = variable, fill=values)) +
+  geom_tile()
+
+
+```
+```{r}
+ethnicity_nri |> 
+  rename()
+```
 
