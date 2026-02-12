@@ -1,4 +1,4 @@
-# EDS 240-National Risk Index and Ethnicity and Racw Visualization
+# EDS 240-National Risk Index and Ethnicity Visualization
 #### Author : Sofia Rodas
 
 This repository answers:
