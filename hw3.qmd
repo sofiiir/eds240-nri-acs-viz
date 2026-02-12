@@ -89,12 +89,25 @@ Join the NRI data and ethnicity data for the rest of the analysis.
 ```{r}
 ethnicity_nri <- full_join(race_ethnicity, nri, by = join_by(county_name))
 ```
+Change the column names
+```{r}
+ethnicity_nri <- ethnicity_nri |> 
+  rename(total_pop = estimate_total,
+         white_pop = estimate_total_white_alone,
+         black_pop = estimate_total_black_or_african_american_alone,
+         indigenous_pop = estimate_total_american_indian_and_alaska_native_alone,
+         asian_pop = estimate_total_asian_alone,
+         paci_islander_pop = estimate_total_native_hawaiian_and_other_pacific_islander_alone,
+         other_race = estimate_total_some_other_race_alone,
+         two_races = estimate_total_two_or_more_races,
+         latino_pop = estimate_total_hispanic_or_latino)
+```
 
 
 First, I'll explore what the percent of total white alone is for the counties in California.
 ```{r}
 ethnicity_nri <- ethnicity_nri |> 
-  mutate(white_percentage = estimate_total_white_alone/estimate_total)
+  mutate(white_percentage = white_pop/total_pop)
 ```
 
 What are the ranges for percentage of white population per county?
@@ -118,7 +131,23 @@ ggplot(ethnicity_nri) +
 #   mutate()
 
 heatmap <- ethnicity_nri |>
-  select(county_name, estimate_total, estimate_total_white_alone, estimate_total_white_alone,estimate_total_black_or_african_american_alone, estimate_total_american_indian_and_alaska_native_alone, estimate_total_asian_alone, estimate_total_native_hawaiian_and_other_pacific_islander_alone, estimate_total_some_other_race_alone, estimate_total_two_or_more_races, estimate_total_hispanic_or_latino) |> 
+  mutate(avg_white_pop = white_pop/total_pop) |> 
+   mutate(avg_black_pop = black_pop/total_pop) |> 
+   mutate(avg_indigenous_pop = indigenous_pop/total_pop) |> 
+   mutate(avg_asian_pop = asian_pop/total_pop) |> 
+   mutate(avg_paci_islander_pop = paci_islander_pop/total_pop) |> 
+   mutate(avg_other_race = other_race/total_pop) |> 
+   mutate(avg_two_races = two_races/total_pop) |> 
+   mutate(avg_latino_pop = latino_pop/total_pop) |> 
+  select(county_name, 
+         avg_white_pop,
+         avg_black_pop,
+         avg_indigenous_pop,
+         avg_asian_pop,
+         avg_paci_islander_pop,
+         avg_other_race,
+         avg_two_races,
+         avg_latino_pop) |> 
   pivot_longer(cols = -county_name,
                names_to = "variable",
                values_to = "values") |> 
@@ -128,9 +157,5 @@ ggplot(heatmap, aes(x = county_name, y = variable, fill=values)) +
   geom_tile()
 
 
-```
-```{r}
-ethnicity_nri |> 
-  rename()
 ```
 
