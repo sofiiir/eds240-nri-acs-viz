@@ -19,6 +19,7 @@ This quarto document explores how FEMA National Risk Index (NRI) scores througho
 library(tidyverse)
 library(tidycensus)
 library(janitor)
+library(patchwork)
 ```
 
 ## Load data
@@ -204,12 +205,12 @@ bp_ethnicity_nri <- bp_ethnicity_nri |>
 
 Define a color palette.
 ```{r}
-asian <- "#448AFF"
+asian <- "#560bad"
 black <- "#8BC34A"
 indigenous <- "#AD1457"
 white <- "#F44336"
 latino <- "#009688"
-other <- "#FFC107"
+other <- "#F9C74F"
 two <- "#FF9800"
 pacif_islander <- "#1565C0"
 
@@ -217,11 +218,12 @@ pacif_islander <- "#1565C0"
 
 
 ```{r}
-bp_ethnicity_nri |> 
+very_high <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Very High") |> 
 ggplot(aes(fill= variable , y=values, x=county_name)) + 
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
+  
   theme_minimal() + 
   scale_fill_manual(values = c(asian,
                                  black, 
@@ -230,14 +232,22 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
                                  other,
                                  pacif_islander,
                                  two, 
-                                 white)) +
+                                 white),
+                     labels = c("Asian",
+                               "Black", 
+                               "Indigenous",
+                               "Latino", 
+                               "Other", 
+                               "Pacific Islander",
+                               "Two or More Races", 
+                               "White")) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Very High NRI Risk") +
   theme(axis.title.y = element_blank())
 ```
 ```{r}
-bp_ethnicity_nri |> 
+relatively_high <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively High") |> 
 ggplot(aes(fill= variable , y=values, x=county_name)) + 
     geom_bar(position="fill", stat="identity") +
@@ -250,7 +260,15 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
                                  other,
                                  pacif_islander,
                                  two, 
-                                 white)) +
+                                 white),
+                     labels = c("Asian",
+                               "Black", 
+                               "Indigenous",
+                               "Latino", 
+                               "Other", 
+                               "Pacific Islander",
+                               "Two or More Races", 
+                               "White")) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively High NRI Risk") +
@@ -258,7 +276,7 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
 ```
 
 ```{r}
-bp_ethnicity_nri |> 
+relatively_moderate <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively Moderate") |> 
 ggplot(aes(fill= variable , y=values, x=county_name)) + 
     geom_bar(position="fill", stat="identity") +
@@ -271,14 +289,22 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
                                  other,
                                  pacif_islander,
                                  two, 
-                                 white)) +
+                                 white),
+                    labels = c("Asian",
+                               "Black", 
+                               "Indigenous",
+                               "Latino", 
+                               "Other", 
+                               "Pacific Islander",
+                               "Two or More Races", 
+                               "White")) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively Moderate NRI Risk") +
   theme(axis.title.y = element_blank())
 ```
 ```{r}
-bp_ethnicity_nri |> 
+relatively_low <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively Low") |> 
 ggplot(aes(fill= variable , y=values, x=county_name)) + 
     geom_bar(position="fill", stat="identity") +
@@ -291,7 +317,15 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
                                  other,
                                  pacif_islander,
                                  two, 
-                                 white)) +
+                                 white),
+                     labels = c("Asian",
+                               "Black", 
+                               "Indigenous",
+                               "Latino", 
+                               "Other", 
+                               "Pacific Islander",
+                               "Two or More Races", 
+                               "White")) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively Low NRI Risk") +
@@ -299,6 +333,12 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
 ```
 
 ```{r}
+(very_high + theme(plot.margin = unit(c(15,5,15,5), "pt"))) + relatively_high + relatively_moderate + 
+  plot_annotation(title = "NRI and Ethnicity Scores for Counties in California",
+                  theme = theme(plot.title = element_text(size = 24, face = "bold"))) + 
+  plot_layout(guides = "collect",
+              axis_titles = "collect")
+
 
 ```
 
