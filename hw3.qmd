@@ -223,6 +223,14 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
+  scale_fill_manual(values = c(asian,
+                                 black, 
+                                 indigenous,
+                                 latino, 
+                                 other,
+                                 pacif_islander,
+                                 two, 
+                                 white)) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Very High NRI Risk") +
@@ -235,6 +243,14 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
+  scale_fill_manual(values = c(asian,
+                                 black, 
+                                 indigenous,
+                                 latino, 
+                                 other,
+                                 pacif_islander,
+                                 two, 
+                                 white)) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively High NRI Risk") +
@@ -248,6 +264,14 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
+  scale_fill_manual(values = c(asian,
+                                 black, 
+                                 indigenous,
+                                 latino, 
+                                 other,
+                                 pacif_islander,
+                                 two, 
+                                 white)) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively Moderate NRI Risk") +
@@ -260,6 +284,14 @@ ggplot(aes(fill= variable , y=values, x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
+  scale_fill_manual(values = c(asian,
+                                 black, 
+                                 indigenous,
+                                 latino, 
+                                 other,
+                                 pacif_islander,
+                                 two, 
+                                 white)) +
   labs(fill = "Ethnicity Population",
        y = "Percentage",
         title = "Relatively Low NRI Risk") +
