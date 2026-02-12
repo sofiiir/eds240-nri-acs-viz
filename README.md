@@ -1,8 +1,11 @@
-# EDS 240-National Risk Index Visualization
+# EDS 240-National Risk Index and Ethnicity and Racw Visualization
 #### Author : Sofia Rodas
 
-This repository attempts to answer:
+This repository answers:
 **How do FEMA National Risk Index scores for counties in California compare to those in other states?** 
+**AND**
+
+
 
 To answer this question, this repository calculates the number of counties in each state that have an NRI score in the "Relatively High" category and plots them. 
 
