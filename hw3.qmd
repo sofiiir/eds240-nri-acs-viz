@@ -7,9 +7,10 @@ warning: false
 message: false
 ---
 
-# How does climate hazard risk exposure vary across racial/ethnic groups in California? 
+# How does climate hazard risk exposure vary across racial/ethnic groups in California?
 
-This quarto document explores how FEMA National Risk Index (NRI) scores throughout California vary between racial and ethnic groups. Ethnicity data is downloaded directly from the American Community Survey (ACS) Census data. 
+This quarto document explores how FEMA National Risk Index (NRI) scores throughout California vary between racial and ethnic groups. Ethnicity data is downloaded directly from the American Community Survey (ACS) Census data.
+
 ```{r}
 #|warning: false
 #|message: false
@@ -19,8 +20,11 @@ library(tidyverse)
 library(tidycensus)
 library(janitor)
 ```
-## Load data 
+
+## Load data
+
 The code commented out below allows us to directly download ACS census data into R. It is commented out as it was saved as a csv and is now accessed locally.
+
 ```{r}
 # #....Step 1a: see all available ACS variables + descriptions.....
 # acs_vars <- tidycensus::load_variables(year = 2023,
@@ -46,6 +50,7 @@ The code commented out below allows us to directly download ACS census data into
 #..................Step 3: read in your CSV file.................
 race_ethnicity <- readr::read_csv(here::here("data", "ACS-1yr-2023-county-race-ethnicity.csv"))
 ```
+
 ```{r}
 # load in the NRI data
 nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv")) |> 
@@ -53,7 +58,9 @@ nri <- read_csv(here::here("data", "National_Risk_Index_Counties.csv")) |>
 ```
 
 ## Clean data
-The ACS data is not "tidy-data". Lets make some changes to tidy the data. 
+
+The ACS data is not "tidy-data". Lets make some changes to tidy the data.
+
 ```{r}
 race_ethnicity <- race_ethnicity |>  
   pivot_wider(names_from = label, values_from = c(estimate)) |> 
@@ -62,7 +69,8 @@ race_ethnicity <- race_ethnicity |>
   
 ```
 
-The data frame is still not tidy because each county name has a row for each column. Let's make one row for each county instead. 
+The data frame is still not tidy because each county name has a row for each column. Let's make one row for each county instead.
+
 ```{r}
 race_ethnicity <- race_ethnicity |> 
   group_by(name) |> 
@@ -71,6 +79,7 @@ race_ethnicity <- race_ethnicity |>
 ```
 
 The ethnicity data needs to be combined with the NRI data so let's make the column only the name of the county.
+
 ```{r}
 race_ethnicity <- race_ethnicity |> 
   mutate(county_name = str_remove_all(name, " County, California")) |> 
@@ -79,17 +88,20 @@ race_ethnicity <- race_ethnicity |>
 ```
 
 Filter the NRI data to only CA data.
+
 ```{r}
 nri <- nri |> 
   filter(state_name == "California")
 ```
 
-
 Join the NRI data and ethnicity data for the rest of the analysis.
+
 ```{r}
 ethnicity_nri <- full_join(race_ethnicity, nri, by = join_by(county_name))
 ```
+
 Change the column names
+
 ```{r}
 ethnicity_nri <- ethnicity_nri |> 
   rename(total_pop = estimate_total,
@@ -103,14 +115,15 @@ ethnicity_nri <- ethnicity_nri |>
          latino_pop = estimate_total_hispanic_or_latino)
 ```
 
-
 First, I'll explore what the percent of total white alone is for the counties in California.
+
 ```{r}
 ethnicity_nri <- ethnicity_nri |> 
   mutate(white_percentage = white_pop/total_pop)
 ```
 
 What are the ranges for percentage of white population per county?
+
 ```{r}
 max(ethnicity_nri$white_percentage, na.rm = TRUE)
 min(ethnicity_nri$white_percentage, na.rm = TRUE)
@@ -125,8 +138,7 @@ ggplot(ethnicity_nri) +
   theme_minimal()
 ```
 
-
-```{r} 
+```{r}
 # ethnicity_nri_perc <- ethnicity_nri |> 
 #   mutate()
 
@@ -156,6 +168,105 @@ heatmap <- ethnicity_nri |>
 ggplot(heatmap, aes(x = county_name, y = variable, fill=values)) +
   geom_tile()
 
+
+```
+
+Maybe a stacked barplot
+
+```{r}
+# ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+#     geom_bar(position="fill", stat="identity")
+
+bp_ethnicity_nri <- ethnicity_nri |>  
+  select(county_name, 
+         white_pop,
+         black_pop,
+         indigenous_pop,
+         asian_pop,
+         paci_islander_pop,
+         other_race,
+         two_races,
+         latino_pop) |> 
+  pivot_longer(cols = -county_name,
+               names_to = "variable",
+               values_to = "values") 
+
+bp_ethnicity_nri <- left_join(bp_ethnicity_nri, nri, by = join_by(county_name))
+
+bp_ethnicity_nri <- bp_ethnicity_nri |> 
+   select(county_name, 
+         variable,
+         values,
+         national_risk_index_rating_composite) |> 
+  drop_na()
+
+```
+
+Define a color palette.
+```{r}
+asian <- "#448AFF"
+black <- "#8BC34A"
+indigenous <- "#AD1457"
+white <- "#F44336"
+latino <- "#009688"
+other <- "#FFC107"
+two <- "#FF9800"
+pacif_islander <- "#1565C0"
+
+```
+
+
+```{r}
+bp_ethnicity_nri |> 
+  filter(national_risk_index_rating_composite == "Very High") |> 
+ggplot(aes(fill= variable , y=values, x=county_name)) + 
+    geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  theme_minimal() + 
+  labs(fill = "Ethnicity Population",
+       y = "Percentage",
+        title = "Very High NRI Risk") +
+  theme(axis.title.y = element_blank())
+```
+```{r}
+bp_ethnicity_nri |> 
+  filter(national_risk_index_rating_composite == "Relatively High") |> 
+ggplot(aes(fill= variable , y=values, x=county_name)) + 
+    geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  theme_minimal() + 
+  labs(fill = "Ethnicity Population",
+       y = "Percentage",
+        title = "Relatively High NRI Risk") +
+  theme(axis.title.y = element_blank())
+```
+
+```{r}
+bp_ethnicity_nri |> 
+  filter(national_risk_index_rating_composite == "Relatively Moderate") |> 
+ggplot(aes(fill= variable , y=values, x=county_name)) + 
+    geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  theme_minimal() + 
+  labs(fill = "Ethnicity Population",
+       y = "Percentage",
+        title = "Relatively Moderate NRI Risk") +
+  theme(axis.title.y = element_blank())
+```
+```{r}
+bp_ethnicity_nri |> 
+  filter(national_risk_index_rating_composite == "Relatively Low") |> 
+ggplot(aes(fill= variable , y=values, x=county_name)) + 
+    geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  theme_minimal() + 
+  labs(fill = "Ethnicity Population",
+       y = "Percentage",
+        title = "Relatively Low NRI Risk") +
+  theme(axis.title.y = element_blank())
+```
+
+```{r}
 
 ```
 
