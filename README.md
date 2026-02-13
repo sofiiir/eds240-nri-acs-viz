@@ -23,8 +23,8 @@ This repository answers:
 
 ## Repository Contents:
 
--**Quarto document:** [Hexbin graph](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/hw2/hw2.qmd).  Quarto document calculating the percentage of counties in each state that have an NRI score in the "Relatively High" category and a hexplot visualizing the results.  
--**Quarto document:** [Stacked Bar Plot]()  Quarto document exploring the racial and ethnic break down of each county relative to their NRI categorical scores.  
+-**Quarto document:** [Hexbin graph](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/hw2/hw2.qmd).  Calculates the percentage of counties in each state that have an NRI score in the "Relatively High" category and a hexplot visualizing the results.  
+-**Quarto document:** [Stacked Bar Plot]()  Explores the racial and ethnic break down of each county relative to their NRI categorical scores.  
 -**Quarto document:** [Data and graph exploration](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/exploration.qmd)
 
 ### References:
