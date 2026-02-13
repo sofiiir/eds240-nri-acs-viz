@@ -17,7 +17,8 @@ This repository answers:
 **Hexbin Geospatial file**: Hexbin geojson files can be downloaded [here](https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map).
 
 ## File structure:
-<img width="424" height="115" alt="Screenshot 2026-01-28 at 11 54 58 PM" src="https://github.com/user-attachments/assets/0b77e244-0cdf-401f-aa33-c8f9bb8115a5" />
+<img width="365" height="190" alt="Screenshot 2026-02-12 at 6 24 01 PM" src="https://github.com/user-attachments/assets/e97a4123-a4fe-4542-942a-3240df3fa1a3" />
+
 
 **Note:** Data was added to .gitignore.
 
