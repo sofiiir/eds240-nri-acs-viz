@@ -293,18 +293,19 @@ very_high +  relatively_high  + relatively_moderate + relatively_low +
 
 ```
 **1. What are your variables of interest and what kinds of data (e.g. numeric, categorical, ordered, etc.) are they (a bullet point list is fine)?**
-- NRI category rating: categorical
-- Population data by ethnicity: numeric
-- Counties in CA: catrgorical
 
-**2. How did you decide which type of graphic form was best suited for answering the question? What alternative graphic forms could you have used instead? Why did you settle on this particular graphic form?**
+- NRI category rating: categorical  
+- Population data by ethnicity: numeric  
+- Counties in CA: categorical  
+
+**2. How did you decide which type of graphic form was best suited for answering the question? What alternative graphic forms could you have used instead? Why did you settle on this particular graphic form?**  
 I made some exploratory graphs that were horrific. I initially made a heat map but it was difficult to get all three variables of interest listed above into the graph. I used the website from data to viz to decide what plots to explore. Their tree of attributes to decide what type of visual to use for what attributes the data has is super helpful. I could have made sankey diagram to visualize this data as well. 
 
-**3. Summarize your main finding in no more than two sentences.**
+**3. Summarize your main finding in no more than two sentences.**  
 All of the counties in the Very High NRI category are less than 40% white; this is in contrast to the counties that are in the Relatively High and Relatively Moderate NRI category where there are a greater number of counties that are over 50% white.  
 
-**4. What modifications did you make to this visualization to make it more easily readable?**
+**4. What modifications did you make to this visualization to make it more easily readable?**  
 I made the barplots horizontal instead of vertical for easier visualization of the breakdown of the ethnicity population in each county. The horizontal bar plots is also helpful for making the county names easily readable. I additionally chose a color scheme that is color blind friendly. 
 
-**5. Is there anything you wanted to implement, but didn’t know how? If so, please describe.**
+**5. Is there anything you wanted to implement, but didn’t know how? If so, please describe.**  
 I implemented everything I wanted to implement in this visual. 
