@@ -12,7 +12,7 @@ This repository answers:
 
 **FEMA National Risk Index (2023 Release)**: FEMA data is publicly available and can be accessed [here](https://experience.arcgis.com/experience/0a317e8998534c30a9b2d3861c814d42/page/RAPT-2025).
 
-**American Community Survey (ACS) Census data (2023 Release)**: Census data is publicly available and can be accessed [here](https://data.census.gov/). The census data can also be directly downloaded in R with an API. The code to do so is in this [quarto document]().
+**American Community Survey (ACS) Census data (2023 Release)**: Census data is publicly available and can be accessed [here](https://data.census.gov/). The census data can also be directly downloaded in R with an API. The code to do so is in this [quarto document](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/hw3/hw3.qmd).
 
 **Hexbin Geospatial file**: Hexbin geojson files can be downloaded [here](https://team.carto.com/u/andrew/tables/andrew.us_states_hexgrid/public/map).
 
@@ -25,7 +25,7 @@ This repository answers:
 ## Repository Contents:
 
 -**Quarto document:** [Hexbin graph](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/hw2/hw2.qmd).  Calculates the percentage of counties in each state that have an NRI score in the "Relatively High" category and a hexplot visualizing the results.  
--**Quarto document:** [Stacked Bar Plot]()  Explores the racial and ethnic break down of each county relative to their NRI categorical scores.  
+-**Quarto document:** [Stacked Bar Plot](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/hw3/hw3.qmd).  Explores the racial and ethnic break down of each county relative to their NRI categorical scores.  
 -**Quarto document:** [Data and graph exploration](https://github.com/sofiiir/eds240-nri-acs-viz/blob/main/exploration.qmd)
 
 ### References:
