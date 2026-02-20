@@ -148,15 +148,23 @@ bp_ethnicity_nri <- bp_ethnicity_nri |>
 
 Let's define a color palette in advance for all of the ethnicities so they are easier to call when creating the stacked bar plots. 
 ```{r}
-asian <- "#560bad"
-black <- "#8BC34A"
-indigenous <- "#AD1457"
-white <- "#F44336"
-latino <- "#009688"
-other <- "#F9C74F"
-two <- "#FF9800"
-pacif_islander <- "#1565C0"
+pal <- c("asian_pop" = "#560bad", 
+         "black_pop" = "#8BC34A",
+         "indigenous_pop" = "#AD1457",
+         "white_pop" = "#F44336", 
+         "latino_pop" = "#009688",
+         "other_race" = "#F9C74F",
+         "two_races" = "#FF9800",
+         "paci_islander_pop" = "#1565C0")
 
+pop_label <- c("asian_pop" = "Asian",
+                "black_pop" = "Black",
+               "indigenous_pop" = "Indigenous",
+               "white_pop" = "White", 
+               "latino_pop" = "Latino",
+               "other_race" = "Other race",
+                "two_races" = "Two or more races",
+               "paci_islander_pop" = "Pacific Islander")
 ```
 
 California counties all have an NRI score that is in the categories of "Very High", "Relatively High", "Relatively Moderate", or "Relatively Low". A stacked bar plot for each of these categories will show the break down of the race and ethnicity data for each county based on it's NRI score. For better control on the numerous aspects of the graph each NRI category graph is made individually and then added into one visual via `patchwork`. 
@@ -165,128 +173,89 @@ California counties all have an NRI score that is in the categories of "Very Hig
 ```{r}
 very_high <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Very High") |> 
-ggplot(aes(fill= variable , y=values, x=county_name)) + 
+  arrange(values) |> 
+ggplot(aes(fill= fct_reorder(variable, values, .desc = FALSE), 
+           y=values, 
+           x=county_name)) + 
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
-  scale_fill_manual(values = c(asian,
-                                 black, 
-                                 indigenous,
-                                 latino, 
-                                 other,
-                                 pacif_islander,
-                                 two, 
-                                 white),
-                     labels = c("Asian",
-                               "Black", 
-                               "Indigenous",
-                               "Latino", 
-                               "Other", 
-                               "Pacific Islander",
-                               "Two or More Races", 
-                               "White")) +
+  scale_fill_manual(values = pal) +
   labs(fill = "Ethnicity Population",
-       y = "Percentage",
+       y = "Population Proportions",
         title = "Very High NRI Risk") +
-  theme(axis.title.y = element_blank())
+  theme(axis.title.y = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(face = "bold"))
 ```
 ### NRI score "Relatively High" Bar Plot
 ```{r}
 relatively_high <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively High") |> 
-ggplot(aes(fill= variable , y=values, x=county_name)) + 
+  arrange(values) |> 
+ggplot(aes(fill= fct_reorder(variable, values, .desc = FALSE),
+           y=values, 
+           x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
-  scale_fill_manual(values = c(asian,
-                                 black, 
-                                 indigenous,
-                                 latino, 
-                                 other,
-                                 pacif_islander,
-                                 two, 
-                                 white),
-                     labels = c("Asian",
-                               "Black", 
-                               "Indigenous",
-                               "Latino", 
-                               "Other", 
-                               "Pacific Islander",
-                               "Two or More Races", 
-                               "White")) +
+  scale_fill_manual(values = pal) +
   labs(fill = "Ethnicity Population",
-       y = "Percentage",
+       y = "Population Proportions",
         title = "Relatively High NRI Risk") +
-  theme(axis.title.y = element_blank())
+  theme(axis.title.y = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(face = "bold"))
 ```
 ### NRI score "Relatively Moderate" Bar Plot
 ```{r}
 relatively_moderate <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively Moderate") |> 
-ggplot(aes(fill= variable , y=values, x=county_name)) + 
+  arrange(values) |> 
+ggplot(aes(fill= fct_reorder(variable, values, .desc = FALSE),
+           y=values, 
+           x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
-  scale_fill_manual(values = c(asian,
-                                 black, 
-                                 indigenous,
-                                 latino, 
-                                 other,
-                                 pacif_islander,
-                                 two, 
-                                 white),
-                    labels = c("Asian",
-                               "Black", 
-                               "Indigenous",
-                               "Latino", 
-                               "Other", 
-                               "Pacific Islander",
-                               "Two or More Races", 
-                               "White")) +
+  scale_fill_manual(values = pal) +
   labs(fill = "Ethnicity Population",
-       y = "Percentage",
+       y = "Population Proportions",
         title = "Relatively Moderate NRI Risk") +
-  theme(axis.title.y = element_blank())
+  theme(axis.title.y = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(face = "bold"))
 ```
 ### NRI score "Relatively Low" Bar Plot
 ```{r}
 relatively_low <- bp_ethnicity_nri |> 
   filter(national_risk_index_rating_composite == "Relatively Low") |> 
-ggplot(aes(fill= variable , y=values, x=county_name)) + 
+ arrange(values) |> 
+ggplot(aes(fill= fct_inorder(variable),
+           y=values, 
+           x=county_name)) +
     geom_bar(position="fill", stat="identity") +
   coord_flip() +
   theme_minimal() + 
-  scale_fill_manual(values = c(asian,
-                                 black, 
-                                 indigenous,
-                                 latino, 
-                                 other,
-                                 pacif_islander,
-                                 two, 
-                                 white),
-                     labels = c("Asian",
-                               "Black", 
-                               "Indigenous",
-                               "Latino", 
-                               "Other", 
-                               "Pacific Islander",
-                               "Two or More Races", 
-                               "White")) +
-  labs(fill = "Ethnicity Population",
-       y = "Percentage",
+  scale_fill_manual(values = pal,
+                    labels = pop_label) +
+  labs(fill = "Race and Ethnicity",
+       y = "Population Proportions",
         title = "Relatively Low NRI Risk") +
-  theme(axis.title.y = element_blank())
+  theme(axis.title.y = element_blank(),
+        plot.title = element_text(face = "bold"))
 ```
 ### Final Stacked Bar Plot
 ```{r}
-#| fig-alt: There are four stacked bar plots showing the ethnic break down of the populations of California counties. Each stacked bar plot is all of the counties in each NRI category represented in California, either "Very High", "Relatively High", "Relatively Moderate", or "Relatively Low". None of the counties in the "Very High" category have a white population above 40% while both the "Relatively High" and "Relatively Moderate" categories have some counties with above 50% white populations. There is only one county California in the "Relatively Low" NRI category" 
+#| fig-alt: There are four stacked bar plots showing the ethnic break down of the populations of California counties. Each stacked bar plot is all of the counties in each NRI category represented in California, either "Very High", "Relatively High", "Relatively Moderate", or "Relatively Low". Counties with NRI scores in the Very High and Relatively High risk categories have a higher proportion of Latino population than counties with NRI scores in the Relatively Moderate and Relatively Low risk categories. There is only one county California in the "Relatively Low" NRI category" 
 #| fig-cap: Data- FEMA National Risk Index (2023 Release) and American Community Survey (ACS) Census data (2023)
 
 
 very_high +  relatively_high  + relatively_moderate + relatively_low +
-  plot_annotation(title = "NRI and Ethnicity Scores for Counties in California",
-                  subtitle = "Counties with NRI scores in the Relatively High and Relatively Moderate categories have a higher percent white population than counties in the Very High category",
-                  theme = theme(plot.title = element_text(size = 24, face = "bold"))) + 
+  plot_annotation(title = "Population proportions by race and ethnicity\ndivided by NRI score risk categories for counties in California",
+                  subtitle = "Population proportions are ordered with the ethnicity or race with the highest proportion for that NRI score category on the left.\nCounties with NRI scores in the Very High and Relatively High risk categories have a higher proportion of Latino population\nthan counties with NRI scores in the Relatively Moderate and Relatively Low risk categories",
+                  theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5),
+                                plot.subtitle = element_text(size = 12, hjust = 0.5))) + 
   plot_layout(guides = "collect",
               axis_titles = "collect")
 
@@ -302,7 +271,7 @@ very_high +  relatively_high  + relatively_moderate + relatively_low +
 I made some exploratory graphs that were horrific. I initially made a heat map but it was difficult to get all three variables of interest listed above into the graph. I used the website from data to viz to decide what plots to explore. Their tree of attributes to decide what type of visual to use for what attributes the data has is super helpful. I could have made sankey diagram to visualize this data as well. 
 
 **3. Summarize your main finding in no more than two sentences.**  
-All of the counties in the Very High NRI category are less than 40% white; this is in contrast to the counties that are in the Relatively High and Relatively Moderate NRI category where there are a greater number of counties that are over 50% white.  
+ Counties with NRI scores in the Very High and Relatively High risk categories have a higher proportion of Latino population than counties with NRI scores in the Relatively Moderate and Relatively Low risk categories
 
 **4. What modifications did you make to this visualization to make it more easily readable?**  
 I made the barplots horizontal instead of vertical for easier visualization of the breakdown of the ethnicity population in each county. The horizontal bar plots is also helpful for making the county names easily readable. I additionally chose a color scheme that is color blind friendly. 
